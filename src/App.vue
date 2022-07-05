@@ -1,20 +1,6 @@
 <script>
 import "./assets/base.css";
 
-const wins = [
-  // horizontal
-  [0, 1, 2],
-  [3, 4, 5],
-  [6, 7, 8],
-  // vertical
-  [0, 3, 6],
-  [1, 4, 7],
-  [2, 5, 8],
-  // diagonal
-  [0, 4, 8],
-  [2, 4, 6],
-];
-
 const Grid = () => ({
   owner: null,
 });
@@ -26,6 +12,7 @@ const buildGrid = () =>
 export default {
   data() {
     return {
+      count: 0,
       shake: false,
       grid: buildGrid(),
       players: [
@@ -40,18 +27,19 @@ export default {
     currentPlayer() {
       return this.players[this.currentPlayerIdx];
     },
-  },
-  methods: {
-    checkForWin(player) {
-      const cells = this.grid.filter((cell) => cell.owner === player);
-
-      return wins.some((winCondition) =>
-        winCondition.every((idx) => cells.includes(idx))
+    gameWinState() {
+      const gMap = { 0: "O", 1: "X", null: "-" };
+      const gridString = this.grid.map((cell) => gMap[cell.owner]).join("");
+      return (
+        gridString.match(/X..X..X|X.X.X|XXX/) ||
+        gridString.match(/O..O..O|O.O.O|OOO/)
       );
     },
-    cellClick(cell, idx) {
+  },
+  methods: {
+    cellClick(cell) {
       if (cell.owner === null) {
-        this.grid[idx].owner = this.currentPlayerIdx;
+        cell.owner = this.currentPlayerIdx;
         this.nextPlayer();
       }
     },
@@ -62,22 +50,29 @@ export default {
       const name = window.prompt("Enter new name:");
       if (name) this.currentPlayer.name = name;
     },
+    newGame() {
+      this.grid = buildGrid();
+      this.currentPlayerIdx = 0;
+    },
   },
 };
 </script>
 
 <template>
   <div id="tictactoe">
-    <h1>Tic Tac Toe</h1>
+    <h1 @click="count = count + 1">Tic Tac Toe {{ count }}</h1>
+    <button type="button" @click="newGame()">Restart Game</button>Board Status:
+    {{ gameWinState }}.
     <h2>
       Current Player's Turn: {{ currentPlayer.name }}
       <button @click="changeName">Edit</button>
     </h2>
+    <div v-if="gameWinState">GAME OVER?!</div>
     <div id="board">
       <div
         v-for="(cell, idx) in grid"
         :key="idx"
-        @click="cellClick(cell, idx)"
+        @click="cellClick(cell)"
         :data-owner="cell.owner"
       >
         {{ players[cell.owner]?.symbol }}
